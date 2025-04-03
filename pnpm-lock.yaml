@@ -11,19 +11,25 @@ importers:
   packages/hardhat:
     devDependencies:
       '@account-abstraction/contracts':
-        specifier: 0.7.0
-        version: 0.7.0
+        specifier: 0.8.0
+        version: 0.8.0
       '@nomicfoundation/hardhat-toolbox-viem':
         specifier: ^3.0.0
         version: 3.0.0(@nomicfoundation/hardhat-ignition-viem@0.15.10)(@nomicfoundation/hardhat-network-helpers@1.0.12)(@nomicfoundation/hardhat-verify@2.0.13)(@nomicfoundation/hardhat-viem@2.0.6)(@types/chai-as-promised@7.1.8)(@types/chai@4.3.20)(@types/mocha@10.0.10)(@types/node@22.14.0)(chai@4.5.0)(hardhat-gas-reporter@1.0.10)(hardhat@2.22.19)(solidity-coverage@0.8.14)(ts-node@10.9.2)(typescript@5.8.2)(viem@2.25.0)
+      '@openzeppelin/contracts':
+        specifier: ^5.2.0
+        version: 5.2.0
       hardhat:
         specifier: ^2.22.19
         version: 2.22.19(ts-node@10.9.2)(typescript@5.8.2)
+      solady:
+        specifier: ^0.1.14
+        version: 0.1.14
 
 packages:
 
-  /@account-abstraction/contracts@0.7.0:
-    resolution: {integrity: sha512-Bt/66ilu3u8I9+vFZ9fTd+cWs55fdb9J5YKfrhsrFafH1drkzwuCSL/xEot1GGyXXNJLQuXbMRztQPyelNbY1A==}
+  /@account-abstraction/contracts@0.8.0:
+    resolution: {integrity: sha512-8krPx/gpnoT+5xAroagVCbeA7FbUigMZWXFKKPm+oghyr29Dksssdx5sI7xGv9212i4JPaDDUGFk58dpuwVgHA==}
     dependencies:
       '@openzeppelin/contracts': 5.2.0
       '@uniswap/v3-periphery': 1.4.4
@@ -3338,6 +3344,10 @@ packages:
       ansi-styles: 4.3.0
       astral-regex: 2.0.0
       is-fullwidth-code-point: 3.0.0
+    dev: true
+
+  /solady@0.1.14:
+    resolution: {integrity: sha512-Gowq1vzo1xGErRFvtV5W10tvyeq9UafGVWh0WisWvJ04fx5gn4dmakwnzEIYr76Am9csHcL1jMhsuuc5/rmEsg==}
     dev: true
 
   /solc@0.8.26(debug@4.4.0):

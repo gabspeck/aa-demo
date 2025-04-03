@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "aa:deploy:local": "cd vendor/aa-contracts && corepack yarn@1 && corepack yarn@1 deploy --network localhost",
+    "bundler:init": "cd vendor/bundler && corepack yarn@1 && corepack yarn@1 preprocess",
+    "bundler:start": "cd vendor/bundler && corepack yarn@1 run bundler --unsafe",
+    "aa:deploy:local": "cd vendor/bundler && corepack yarn@1 hardhat-deploy --network localhost",
     "hh:node": "pnpm --filter @appliedblockchain/aa-demo-contracts hh:node"
   },
   "keywords": [],
