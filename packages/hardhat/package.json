@@ -1,0 +1,17 @@
+{
+  "name": "@appliedblockchain/aa-demo-contracts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "hh:node": "hardhat node"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@account-abstraction/contracts": "0.7.0",
+    "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
+    "hardhat": "^2.22.19"
+  }
+}
