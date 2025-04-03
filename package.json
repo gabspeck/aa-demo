@@ -1,0 +1,13 @@
+{
+  "name": "@appliedblockchain/aa-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "aa:deploy": "cd vendor/aa-contracts && corepack yarn@1 && corepack yarn@1 deploy --network localhost"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
