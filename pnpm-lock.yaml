@@ -13,6 +13,9 @@ importers:
       '@account-abstraction/contracts':
         specifier: 0.8.0
         version: 0.8.0
+      '@nomicfoundation/hardhat-ignition':
+        specifier: ^0.15.10
+        version: 0.15.10(@nomicfoundation/hardhat-verify@2.0.13)(hardhat@2.22.19)
       '@nomicfoundation/hardhat-toolbox-viem':
         specifier: ^3.0.0
         version: 3.0.0(@nomicfoundation/hardhat-ignition-viem@0.15.10)(@nomicfoundation/hardhat-network-helpers@1.0.12)(@nomicfoundation/hardhat-verify@2.0.13)(@nomicfoundation/hardhat-viem@2.0.6)(@types/chai-as-promised@7.1.8)(@types/chai@4.3.20)(@types/mocha@10.0.10)(@types/node@22.14.0)(chai@4.5.0)(hardhat-gas-reporter@1.0.10)(hardhat@2.22.19)(solidity-coverage@0.8.14)(ts-node@10.9.2)(typescript@5.8.2)(viem@2.25.0)
@@ -25,6 +28,9 @@ importers:
       solady:
         specifier: ^0.1.14
         version: 0.1.14
+      viem:
+        specifier: ^2.25.0
+        version: 2.25.0(typescript@5.8.2)
 
 packages:
 

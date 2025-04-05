@@ -29,7 +29,6 @@ contract P256AccountFactory {
      * This method returns an existing account address so that entryPoint.getSenderAddress() would work even after account creation
      */
     function createAccount(
-        address owner,
 		bytes32 qx,
 		bytes32 qy,
         uint256 salt
@@ -38,7 +37,7 @@ contract P256AccountFactory {
             msg.sender == address(senderCreator),
             "only callable from SenderCreator"
         );
-        address addr = getAddress(owner, qx, qy, salt);
+        address addr = getAddress(qx, qy, salt);
         uint256 codeSize = addr.code.length;
         if (codeSize > 0) {
             return P256Account(payable(addr));
@@ -47,7 +46,7 @@ contract P256AccountFactory {
             payable(
                 new ERC1967Proxy{salt: bytes32(salt)}(
                     address(accountImplementation),
-                    abi.encodeCall(P256Account.initialize, (owner, qx, qy))
+                    abi.encodeCall(P256Account.initialize, ( qx, qy))
                 )
             )
         );
@@ -57,7 +56,6 @@ contract P256AccountFactory {
      * calculate the counterfactual address of this account as it would be returned by createAccount()
      */
     function getAddress(
-        address owner,
 		bytes32 qx,
 		bytes32 qy,
         uint256 salt
@@ -70,7 +68,7 @@ contract P256AccountFactory {
                         type(ERC1967Proxy).creationCode,
                         abi.encode(
                             address(accountImplementation),
-                            abi.encodeCall(P256Account.initialize, (owner, qx, qy))
+                            abi.encodeCall(P256Account.initialize, (qx, qy))
                         )
                     )
                 )

@@ -24,20 +24,18 @@ contract P256Account is
 	error OnlyOwner();
 
 	IEntryPoint private immutable _entrypoint;
-	address private _owner;
 
     constructor(IEntryPoint entryPoint) {
 		_entrypoint = entryPoint;
     }
 
 	function _onlyOwner() internal view {
-		if (msg.sender != _owner && msg.sender != address(this)) {
+		if (msg.sender != address(this)) {
 			revert OnlyOwner();
 		}
 	}
 
-	function initialize(address owner, bytes32 qx, bytes32 qy) public virtual initializer {
-		_owner = owner;
+	function initialize(bytes32 qx, bytes32 qy) public virtual initializer {
 		_setSigner(qx, qy);
 		_disableInitializers();
 	}
