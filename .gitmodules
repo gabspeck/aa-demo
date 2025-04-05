@@ -1,4 +1,4 @@
 [submodule "vendor/bundler"]
 	path = vendor/bundler
 	url = https://github.com/eth-infinitism/bundler
-        ignore = dirty
+	ignore = dirty
