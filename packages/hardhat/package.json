@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "hh:node": "hardhat node"
+    "hh:node": "hardhat node",
+    "ig": "hardhat ignition",
+    "ig:wipe": "pnpm ig wipe chain-31337 P256AccountFactory#P256AccountFactory",
+    "ig:deploy": "pnpm ig deploy ignition/modules/P256AccountFactory.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +18,7 @@
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
     "@openzeppelin/contracts": "^5.2.0",
     "hardhat": "^2.22.19",
+    "permissionless": "^0.2.39",
     "solady": "^0.1.14",
     "viem": "^2.25.0"
   }
