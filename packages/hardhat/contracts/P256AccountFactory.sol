@@ -2,8 +2,9 @@
 pragma solidity ^0.8.28;
 
 import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import {ISenderCreator} from "@account-abstraction/contracts/interfaces/ISenderCreator.sol";
+import {SenderCreator} from "@account-abstraction/contracts/core/SenderCreator.sol";
 import {P256Account} from "./P256Account.sol";
+import {AccountRegistry} from "./AccountRegistry.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -13,13 +14,13 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
  * The factory's createAccount returns the target account address even if it is already installed.
  * This way, the entryPoint.getSenderAddress() can be called either before or after the account is created.
  */
-contract P256AccountFactory {
+contract P256AccountFactory is AccountRegistry {
     P256Account public immutable accountImplementation;
-    ISenderCreator public immutable senderCreator;
+    uint256 private immutable salt;
 
-    constructor(IEntryPoint _entryPoint) {
+    constructor(IEntryPoint _entryPoint, uint256 _salt) {
         accountImplementation = new P256Account(_entryPoint);
-        senderCreator = _entryPoint.senderCreator();
+        salt = _salt;
     }
 
     /**
@@ -29,16 +30,15 @@ contract P256AccountFactory {
      * This method returns an existing account address so that entryPoint.getSenderAddress() would work even after account creation
      */
     function createAccount(
-        bytes calldata cid,
 		bytes32 qx,
-		bytes32 qy,
-        uint256 salt
+		bytes32 qy
     ) public returns (P256Account ret) {
-        require(
-            msg.sender == address(senderCreator),
-            "only callable from SenderCreator"
-        );
-        address addr = getAddress(cid, salt);
+        // Not available on 0.7
+        // require(
+        //     msg.sender == address(senderCreator),
+        //     "only callable from SenderCreator"
+        // );
+        address addr = getAddress(qx, qy);
         uint256 codeSize = addr.code.length;
         if (codeSize > 0) {
             return P256Account(payable(addr));
@@ -47,7 +47,7 @@ contract P256AccountFactory {
             payable(
                 new ERC1967Proxy{salt: bytes32(salt)}(
                     address(accountImplementation),
-                    abi.encodeCall(P256Account.initialize, (cid, qx, qy))
+                    abi.encodeCall(P256Account.initialize, (qx, qy))
                 )
             )
         );
@@ -57,8 +57,8 @@ contract P256AccountFactory {
      * calculate the counterfactual address of this account as it would be returned by createAccount()
      */
     function getAddress(
-        bytes calldata cid,
-        uint256 salt
+        bytes32 qx,
+        bytes32 qy
     ) public view returns (address) {
         return
             Create2.computeAddress(
@@ -68,7 +68,7 @@ contract P256AccountFactory {
                         type(ERC1967Proxy).creationCode,
                         abi.encode(
                             address(accountImplementation),
-                            cid
+                            abi.encodeCall(P256Account.initialize, (qx, qy))
                         )
                     )
                 )

@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "bundler:init": "cd vendor/bundler && corepack yarn@1 && corepack yarn@1 preprocess",
     "bundler:start": "cd vendor/bundler && corepack yarn@1 run bundler --unsafe",
-    "aa:deploy:local": "cd vendor/bundler && corepack yarn@1 hardhat-deploy --network localhost",
+    "aa:deploy:local": "cd vendor/account-abstraction && env COREPACK_ENABLE_STRICT=0 corepack yarn@1 && env COREPACK_ENABLE_STRICT=0 corepack yarn@1 deploy --network localhost",
     "hh:node": "pnpm --filter @appliedblockchain/aa-demo-contracts hh:node"
   },
   "keywords": [

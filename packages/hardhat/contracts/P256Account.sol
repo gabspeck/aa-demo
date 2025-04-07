@@ -22,9 +22,6 @@ contract P256Account is
 {
 
 	error OnlyOwner();
-    error InvalidCredentialIdLength(uint256 actualLenght);
-
-    bytes private _credentialId;
 
 	IEntryPoint private immutable _entrypoint;
 
@@ -38,18 +35,10 @@ contract P256Account is
 		}
 	}
 
-	function initialize(bytes calldata cid, bytes32 qx, bytes32 qy) public virtual initializer {
-        if (cid.length < 16) {
-            revert InvalidCredentialIdLength(cid.length);
-        }
-        _credentialId = cid;
+	function initialize(bytes32 qx, bytes32 qy) public virtual initializer {
 		_setSigner(qx, qy);
 		_disableInitializers();
 	}
-
-    function credentialId() public view returns (bytes memory){
-        return _credentialId;
-    }
 
     function onERC721Received(
         address,

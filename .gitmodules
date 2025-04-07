@@ -2,3 +2,7 @@
 	path = vendor/bundler
 	url = https://github.com/eth-infinitism/bundler
 	ignore = dirty
+[submodule "vendor/account-abstraction"]
+	path = vendor/account-abstraction
+	url = https://github.com/eth-infinitism/account-abstraction
+        ignore = dirty

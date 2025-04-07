@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
+import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
+
+struct PublicKey {
+	bytes32 x;
+	bytes32 y;
+}
+
+contract AccountRegistry {
+
+	mapping(bytes id => PublicKey) private _keys;
+
+	error AccountRegistryCredentialAlreadyRegistered();
+	error AccountRegistryInvalidPublicKey();
+
+	function getCredentialPublicKey(bytes calldata id) view external returns (bytes32 x, bytes32 y){
+		return (_keys[id].x, _keys[id].y);
+	}
+
+	function saveCredentialPublicKey(bytes calldata id, bytes32 x, bytes32 y) external {
+		if (_keys[id].x != 0) {
+			revert AccountRegistryCredentialAlreadyRegistered();
+		}
+		if (!P256.isValidPublicKey(x, y)) {
+			revert AccountRegistryInvalidPublicKey();
+		}
+		_keys[id].x = x;
+		_keys[id].y = y;
+	}
+
+}
