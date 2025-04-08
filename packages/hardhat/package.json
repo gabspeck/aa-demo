@@ -7,16 +7,17 @@
     "hh:node": "hardhat node",
     "ig": "hardhat ignition",
     "ig:wipe": "pnpm ig wipe chain-31337 P256AccountFactory#P256AccountFactory",
-    "ig:deploy": "pnpm ig deploy ignition/modules/P256AccountFactory.ts"
+    "ig:deploy": "pnpm ig deploy ignition/modules/P256SimpleAccountFactory.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@account-abstraction/contracts": "0.7.0",
+    "@account-abstraction/contracts": "0.8.0",
     "@nomicfoundation/hardhat-ignition": "^0.15.10",
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
     "@openzeppelin/contracts": "^5.2.0",
+    "@wagmi/cli": "^2.2.1",
     "hardhat": "^2.22.19",
     "permissionless": "^0.2.39",
     "solady": "^0.1.14",

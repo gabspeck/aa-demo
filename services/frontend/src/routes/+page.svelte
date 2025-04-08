@@ -1,167 +1,103 @@
-<h1>Passkey demo</h1>
+<main class="w-full h-full">
+    <div class="m-5">
+        <form onsubmit={saveCredential}>
+            <h2>Create credential and save to registry</h2>
+            <input class="form-input" name="username" bind:value={username} required>
+            <button type="submit" class="form-input">Create credential</button>
+        </form>
+        <form class="my-5" onsubmit={retrieveCredential}>
+            <button type="submit" class="form-input">Retrieve Credential</button>
+        </form>
+        {#if cred}
+            <p>Credential ID: {cred.id}</p>
+            <p>x: {x}</p>
+            <p>y: {y}</p>
+            <form onsubmit={sendUserOp}>
+                <button type="submit">Send User Op</button>
+            </form>
+        {:else}
+            <p>Create or retrieve a credential to begin</p>
+        {/if}
+    </div>
+</main>
 
-<button class="border p-2 bg-gray-200 active:bg-gray-400" onclick={getCredential}>Get credential</button>
-
-{#if cred}
-	<div>
-		<p>Credential ID: {cred.id}</p>
-		<p>Signature length: {cred.response.signature.byteLength} bytes</p>
-	</div>
-{/if}
 
 <script lang="ts">
+    import {p256SimpleAccountFactoryAbi} from "@appliedblockchain/aa-demo-contracts";
+    import {
+        createBundlerClient,
+        createWebAuthnCredential,
+        type CreateWebAuthnCredentialReturnType, sendUserOperation,
+        toWebAuthnAccount
+    } from "viem/account-abstraction";
+    import {createWalletClient, getContract, http, toHex} from "viem";
+    import {privateKeyToAccount} from "viem/accounts";
+    import {getTransactionReceipt} from "viem/actions";
 
+    const rpcEndpoint = "http://localhost:8545"
+    const bundlerRpcEndpoint = "http://localhost:3000"
+    const relayerKey = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+    const factoryAddress = "0x5fc8d32690cc91d4c39d9d3abcbd16989f875707"
+    const relayerAccount = privateKeyToAccount(relayerKey)
+    const client = createWalletClient({account: relayerAccount, transport: http(rpcEndpoint)})
+    const bundlerClient = createBundlerClient({transport: http(bundlerRpcEndpoint)})
+    const factoryContract = getContract({
+        client,
+        abi: p256SimpleAccountFactoryAbi,
+        address: factoryAddress,
+    })
 
-	import {
-		type Address,
-		type Call,
-		createClient,
-		type Hash,
-		type Hex,
-		http,
-		type SignableMessage,
-		type TypedDataDefinition, type UnionPartialBy
-	} from 'viem';
-	import { hardhat } from 'viem/chains';
-	import {
-		bundlerActions, createWebAuthnCredential,
-		toSmartAccount,
-		type UserOperation,
-		type UserOperationRequest
-	} from 'viem/account-abstraction';
-	import { readContract } from 'viem/actions';
+    let username = $state('')
+    let x = $state('')
+    let y = $state('')
+    let cred: PublicKeyCredential & { response: AuthenticatorAttestationResponse | AuthenticatorAssertionResponse } | null = $state(null)
 
-	type PublicKeyCredentialAssertion = PublicKeyCredential & { response: AuthenticatorAssertionResponse }
+    type CreateWebAuthnCredentialAttestationReturnType = CreateWebAuthnCredentialReturnType & {
+        raw: CreateWebAuthnCredentialReturnType['raw'] & {
+            response: AuthenticatorAttestationResponse
+        }
+    }
 
-	let cred: PublicKeyCredentialAssertion | null = null;
+    function extractXYCoords(key: Uint8Array) {
+        return {x: toHex(new Uint8Array(key.slice(-64, -32))), y: toHex(new Uint8Array(key.slice(-32)))}
+    }
 
-	async function connect({credentialId}: {credentialId: ArrayBuffer}) {
+    async function saveCredential(e: SubmitEvent & { currentTarget: EventTarget & HTMLFormElement }) {
+        e.preventDefault()
+        const challengeArray = new Uint8Array(32);
+        const viemCred = await createWebAuthnCredential({
+            name: username,
+            challenge: crypto.getRandomValues(challengeArray)
+        }) as CreateWebAuthnCredentialAttestationReturnType
+        cred = viemCred.raw as unknown as PublicKeyCredential & { response: AuthenticatorAttestationResponse }
+        const key = (cred.response as AuthenticatorAttestationResponse).getPublicKey()
+        if (key == null) {
+            throw new Error("No public key found")
+        }
+        const {x, y} = extractXYCoords(new Uint8Array(key))
+        const txHash = await factoryContract.write.saveCredentialPublicKey([toHex(cred.id), x, y])
+        const receipt = await getTransactionReceipt(client, {hash: txHash})
+        const account = toWebAuthnAccount({credential: viemCred})
+    }
 
-		const factoryAddress = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0';
-		const factoryAbi = [
-			{
-				inputs: [
-					{
-						internalType: 'contract IEntryPoint',
-						name: '_entryPoint',
-						type: 'address'
-					}
-				],
-				stateMutability: 'nonpayable',
-				type: 'constructor'
-			},
-			{
-				inputs: [],
-				name: 'accountImplementation',
-				outputs: [
-					{
-						internalType: 'contract P256Account',
-						name: '',
-						type: 'address'
-					}
-				],
-				stateMutability: 'view',
-				type: 'function'
-			},
-			{
-				inputs: [
-					{ internalType: 'bytes', name: 'cid', type: 'bytes' },
-					{ internalType: 'bytes32', name: 'qx', type: 'bytes32' },
-					{ internalType: 'bytes32', name: 'qy', type: 'bytes32' },
-					{ internalType: 'uint256', name: 'salt', type: 'uint256' }
-				],
-				name: 'createAccount',
-				outputs: [
-					{
-						internalType: 'contract P256Account',
-						name: 'ret',
-						type: 'address'
-					}
-				],
-				stateMutability: 'nonpayable',
-				type: 'function'
-			},
-			{
-				inputs: [
-					{ internalType: 'bytes', name: 'cid', type: 'bytes' },
-					{ internalType: 'bytes32', name: 'qx', type: 'bytes32' },
-					{ internalType: 'bytes32', name: 'qy', type: 'bytes32' },
-					{ internalType: 'uint256', name: 'salt', type: 'uint256' }
-				],
-				name: 'getAddress',
-				outputs: [ { internalType: 'address', name: '', type: 'address' } ],
-				stateMutability: 'view',
-				type: 'function'
-			},
-			{
-				inputs: [],
-				name: 'senderCreator',
-				outputs: [
-					{
-						internalType: 'contract ISenderCreator',
-						name: '',
-						type: 'address'
-					}
-				],
-				stateMutability: 'view',
-				type: 'function'
-			}
-		];
-		const entryPointV07Address = '0x7192B26e73f6D7BA545693a9B14A2DE9fa35254c'
-		const entryPointV08Abi = []
-		const client = createClient({ chain: hardhat, transport: http('http://localhost:3000/rpc') }).extend(bundlerActions);
-		await toSmartAccount({
-			client,
-			decodeCalls(data: Hex): Promise<readonly Call[]> {
-				return Promise.resolve([]);
-			},
-			encodeCalls(calls: readonly Call[]): Promise<Hex> {
-				return Promise.resolve(undefined);
-			},
-			entryPoint: {
-				address: entryPointV08Address,
-				abi: entryPointV08Abi,
-				version: '0.8' as '0.7'
-			},
-			extend: undefined,
-			getAddress(): Promise<Address> {
-				return readContract(client, {
-					abi: factoryAbi,
-					functionName: 'getAddress',
-					parameters: [credentialId]
-				})
-			},
-			getFactoryArgs(): Promise<{ factory?: Address | undefined; factoryData?: Hex | undefined }> {
-				return Promise.resolve({});
-			},
-			getNonce(parameters: { key?: bigint | undefined } | undefined): Promise<bigint> {
-				return Promise.resolve(0n);
-			},
-			getStubSignature(parameters: UserOperationRequest | undefined): Promise<Hex> {
-				return Promise.resolve(undefined);
-			},
-			nonceKeyManager: undefined,
-			sign(parameters: { hash: Hash }): Promise<Hex> {
-				return Promise.resolve(undefined);
-			},
-			signMessage(parameters: { message: SignableMessage }): Promise<Hex> {
-				return Promise.resolve(undefined);
-			},
-			signTypedData<typedData, primaryType>(parameters: TypedDataDefinition<typedData, primaryType>): Promise<Hex> {
-				return Promise.resolve(undefined);
-			},
-			signUserOperation(parameters: UnionPartialBy<UserOperation, "sender"> & {
-				chainId?: number | undefined
-			}): Promise<Hex> {
-				return Promise.resolve(undefined);
-			},
-			userOperation: {}
-		})
-	}
+    async function sendUserOp() {
+        // todo: create smart account instance and pass it to sendUserOperation
+        await sendUserOperation(bundlerClient, {
+            // account
+        })
+    }
 
-	async function getCredential() {
-		const challengeArray = new Uint8Array(32);
-		const cred = createWebAuthnCredential({name: "Demo"})
-		console.log({cred})
-	}
+    async function retrieveCredential() {
+        const challengeArray = new Uint8Array(32)
+        cred = await navigator.credentials.get({publicKey: {challenge: challengeArray}}) as PublicKeyCredential & {
+            response: AuthenticatorAssertionResponse | AuthenticatorAttestationResponse
+        }
+        if (!cred) {
+            throw new Error("No credential returned")
+        }
+
+        const result = await factoryContract.read.getCredentialPublicKey([toHex(cred.id)])
+        ;([x, y] = result)
+    }
+
 </script>

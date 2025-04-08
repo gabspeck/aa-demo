@@ -6,3 +6,6 @@
 	path = vendor/account-abstraction
 	url = https://github.com/eth-infinitism/account-abstraction
         ignore = dirty
+[submodule "packages/hardhat/vendor/openzeppelin-community-contracts"]
+	path = packages/hardhat/vendor/openzeppelin-community-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-community-contracts

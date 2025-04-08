@@ -7,12 +7,12 @@ struct PublicKey {
 	bytes32 y;
 }
 
-contract AccountRegistry {
+contract PublicKeyRegistry {
 
 	mapping(bytes id => PublicKey) private _keys;
 
-	error AccountRegistryCredentialAlreadyRegistered();
-	error AccountRegistryInvalidPublicKey();
+	error PublicKeyRegistryKeyAlreadyRegistered(bytes32 x, bytes32 y);
+	error PublicKeyRegistryInvalidPublicKey(bytes32 x, bytes32 y);
 
 	function getCredentialPublicKey(bytes calldata id) view external returns (bytes32 x, bytes32 y){
 		return (_keys[id].x, _keys[id].y);
@@ -20,10 +20,10 @@ contract AccountRegistry {
 
 	function saveCredentialPublicKey(bytes calldata id, bytes32 x, bytes32 y) external {
 		if (_keys[id].x != 0) {
-			revert AccountRegistryCredentialAlreadyRegistered();
+			revert PublicKeyRegistryKeyAlreadyRegistered(x, y);
 		}
 		if (!P256.isValidPublicKey(x, y)) {
-			revert AccountRegistryInvalidPublicKey();
+			revert PublicKeyRegistryInvalidPublicKey(x, y);
 		}
 		_keys[id].x = x;
 		_keys[id].y = y;

@@ -37,6 +37,10 @@
 		"vite": "^6.2.5"
 	},
 	"dependencies": {
+		"@appliedblockchain/aa-demo-contracts": "workspace:",
+		"@simplewebauthn/browser": "^13.1.0",
+		"@simplewebauthn/server": "^13.1.1",
+		"cbor2": "^1.12.0",
 		"viem": "^2.25.0"
 	}
 }
