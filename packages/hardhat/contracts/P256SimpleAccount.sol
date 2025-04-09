@@ -13,13 +13,15 @@ import {SIG_VALIDATION_FAILED, SIG_VALIDATION_SUCCESS} from "@account-abstractio
 import {TokenCallbackHandler} from "@account-abstraction/contracts/accounts/callback/TokenCallbackHandler.sol";
 import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {SignerP256} from "../vendor/openzeppelin-community-contracts/contracts/utils/cryptography/SignerP256.sol";
+import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 
 contract P256SimpleAccount is
     BaseAccount,
     TokenCallbackHandler,
     UUPSUpgradeable,
     Initializable,
-    SignerP256
+    SignerP256,
+    IERC1271
 {
     error OnlyOwner();
     error OnlyOwnerOrEntryPoint();
@@ -114,5 +116,12 @@ contract P256SimpleAccount is
     ) internal view override {
         (newImplementation);
         _onlyOwner();
+    }
+
+    function isValidSignature(bytes32 hash, bytes calldata signature) external view returns (bytes4 magicValue) {
+        if (_rawSignatureValidation(hash, signature)) {
+            return 0x1626ba7e;
+        }
+        return 0x0;
     }
 }
