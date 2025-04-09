@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import "hardhat/console.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import {ISenderCreator} from "@account-abstraction/contracts/interfaces/ISenderCreator.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import {ISenderCreator} from "@account-abstraction/contracts/interfaces/ISenderCreator.sol";
 import {P256SimpleAccount} from "./P256SimpleAccount.sol";
 import {PublicKeyRegistry} from "./PublicKeyRegistry.sol";
 
@@ -39,23 +40,24 @@ contract P256SimpleAccountFactory is PublicKeyRegistry {
         bytes32 qx,
         bytes32 qy
     ) public returns (P256SimpleAccount ret) {
-        require(
-            msg.sender == address(senderCreator),
-			OnlySenderCreator()
-        );
-        address addr = getAddress(qx, qy);
-        uint256 codeSize = addr.code.length;
-        if (codeSize > 0) {
-            return P256SimpleAccount(payable(addr));
-        }
-        ret = P256SimpleAccount(
-            payable(
-                new ERC1967Proxy{salt: bytes32(salt)}(
-                    address(accountImplementation),
-                    abi.encodeCall(P256SimpleAccount.initialize, (qx, qy))
-                )
-            )
-        );
+        console.log("create account called lol");
+//        require(
+//            msg.sender == address(senderCreator),
+//			OnlySenderCreator()
+//        );
+//        address addr = getAddress(qx, qy);
+//        uint256 codeSize = addr.code.length;
+//        if (codeSize > 0) {
+//            return P256SimpleAccount(payable(addr));
+//        }
+//        ret = P256SimpleAccount(
+//            payable(
+//                new ERC1967Proxy{salt: bytes32(salt)}(
+//                    address(accountImplementation),
+//                    abi.encodeCall(P256SimpleAccount.initialize, (qx, qy))
+//                )
+//            )
+//        );
     }
 
     /**

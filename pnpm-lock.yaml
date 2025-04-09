@@ -19,6 +19,9 @@ importers:
       '@nomicfoundation/hardhat-toolbox-viem':
         specifier: ^3.0.0
         version: 3.0.0(5mzlhfw3uy5lpqjb2w7gbf4c7m)
+      '@nomicfoundation/hardhat-verify':
+        specifier: ^2.0.13
+        version: 2.0.13(hardhat@2.22.19(ts-node@10.9.2(@types/node@22.14.0)(typescript@5.8.2))(typescript@5.8.2))
       '@openzeppelin/contracts':
         specifier: ^5.2.0
         version: 5.2.0
@@ -28,6 +31,12 @@ importers:
       hardhat:
         specifier: ^2.22.19
         version: 2.22.19(ts-node@10.9.2(@types/node@22.14.0)(typescript@5.8.2))(typescript@5.8.2)
+      hardhat-dependency-compiler:
+        specifier: ^1.2.1
+        version: 1.2.1(hardhat@2.22.19(ts-node@10.9.2(@types/node@22.14.0)(typescript@5.8.2))(typescript@5.8.2))
+      hardhat-tracer:
+        specifier: ^3.1.0
+        version: 3.1.0(chai@4.5.0)(hardhat@2.22.19(ts-node@10.9.2(@types/node@22.14.0)(typescript@5.8.2))(typescript@5.8.2))
       permissionless:
         specifier: ^0.2.39
         version: 0.2.39(viem@2.25.0(typescript@5.8.2)(zod@3.24.2))
@@ -2102,10 +2111,22 @@ packages:
     engines: {node: '>=0.4.7'}
     hasBin: true
 
+  hardhat-dependency-compiler@1.2.1:
+    resolution: {integrity: sha512-xG5iwbspTtxOEiP5UsPngEYQ1Hg+fjTjliapIjdTQmwGkCPofrsDhQDV2O/dopcYzcR68nTx2X8xTewYHgA2rQ==}
+    engines: {node: '>=14.14.0'}
+    peerDependencies:
+      hardhat: ^2.0.0
+
   hardhat-gas-reporter@1.0.10:
     resolution: {integrity: sha512-02N4+So/fZrzJ88ci54GqwVA3Zrf0C9duuTyGt0CFRIh/CdNwbnTgkXkRfojOMLBQ+6t+lBIkgbsOtqMvNwikA==}
     peerDependencies:
       hardhat: ^2.0.2
+
+  hardhat-tracer@3.1.0:
+    resolution: {integrity: sha512-Ip16HQAuzbqbNJUIEVfqmbPmOY90bxZSpwu5Q73cwloy+LUYA04BATUM9Gui5H7zcgsgZ1IVy7pSYn6ZMjLmag==}
+    peerDependencies:
+      chai: 4.x
+      hardhat: '>=2.22.5 <3.x'
 
   hardhat@2.22.19:
     resolution: {integrity: sha512-jptJR5o6MCgNbhd7eKa3mrteR+Ggq1exmE5RUL5ydQEVKcZm0sss5laa86yZ0ixIavIvF4zzS7TdGDuyopj0sQ==}
@@ -5712,6 +5733,10 @@ snapshots:
     optionalDependencies:
       uglify-js: 3.19.3
 
+  hardhat-dependency-compiler@1.2.1(hardhat@2.22.19(ts-node@10.9.2(@types/node@22.14.0)(typescript@5.8.2))(typescript@5.8.2)):
+    dependencies:
+      hardhat: 2.22.19(ts-node@10.9.2(@types/node@22.14.0)(typescript@5.8.2))(typescript@5.8.2)
+
   hardhat-gas-reporter@1.0.10(hardhat@2.22.19(ts-node@10.9.2(@types/node@22.14.0)(typescript@5.8.2))(typescript@5.8.2)):
     dependencies:
       array-uniq: 1.0.3
@@ -5722,6 +5747,19 @@ snapshots:
       - '@codechecks/client'
       - bufferutil
       - debug
+      - utf-8-validate
+
+  hardhat-tracer@3.1.0(chai@4.5.0)(hardhat@2.22.19(ts-node@10.9.2(@types/node@22.14.0)(typescript@5.8.2))(typescript@5.8.2)):
+    dependencies:
+      chai: 4.5.0
+      chalk: 4.1.2
+      debug: 4.4.0(supports-color@8.1.1)
+      ethers: 5.8.0
+      hardhat: 2.22.19(ts-node@10.9.2(@types/node@22.14.0)(typescript@5.8.2))(typescript@5.8.2)
+      semver: 7.7.1
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
       - utf-8-validate
 
   hardhat@2.22.19(ts-node@10.9.2(@types/node@22.14.0)(typescript@5.8.2))(typescript@5.8.2):
