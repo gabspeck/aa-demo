@@ -18,8 +18,14 @@
         </form>
         {#if cred}
             <p>Credential ID: {cred.id}</p>
-            <p>x: {x}</p>
-            <p>y: {y}</p>
+            {#await xyPromise}
+                <p>Retrieving public key coords...</p>
+            {:then {x, y}}
+                <p>x: {x}</p>
+                <p>y: {y}</p>
+            {:catch e}
+                <p>Error retrieving public key: {e}</p>
+            {/await}
             {#await accountAddressPromise}
                 <p>Retrieving address...</p>
             {:then address}
@@ -77,7 +83,11 @@
     const erc20TokenAddress = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
     const entryPointV08Address = '0x4337084d9e255ff0702461cf8895ce9e3b5ff108'
     const relayerAccount = privateKeyToAccount(relayerKey)
-    const client = createWalletClient({account: relayerAccount, chain: hardhat, transport: http(rpcEndpoint)}).extend(publicActions)
+    const client = createWalletClient({
+        account: relayerAccount,
+        chain: hardhat,
+        transport: http(rpcEndpoint)
+    }).extend(publicActions)
     const bundlerClient = createBundlerClient({transport: http(bundlerRpcEndpoint), chain: hardhat})
     const factoryContract = getContract({
         client,
@@ -1158,12 +1168,21 @@
             }
         ] as const
     let username = $state('')
-    let x: Hex | null = $state(null)
-    let y: Hex | null = $state(null)
     let cred: PublicKeyCredential & {
         response: AuthenticatorAttestationResponse | AuthenticatorAssertionResponse
     } | null = $state(null)
-    let webauthnAccount = $derived.by(() => {
+    const xyPromise = $derived.by(async () => {
+        if (cred) {
+            if (cred.response instanceof AuthenticatorAttestationResponse) {
+                return extractXYCoords(new Uint8Array(cred.response.getPublicKey()!))
+            }
+            const [x, y] = await factoryContract.read.getCredentialPublicKey([toHex(new Uint8Array(cred.rawId))])
+            return {x, y}
+        }
+        return {x: null, y: null}
+    })
+    const webauthnAccountPromise = $derived.by(async () => {
+        const {x, y} = await xyPromise
         if (cred && x && y) {
             return toWebAuthnAccount({
                 credential: {
@@ -1174,12 +1193,13 @@
         }
         return null
     })
-    let accountAddressPromise = $derived.by(async () => {
+    const accountAddressPromise = $derived.by(async () => {
+        const {x, y} = await xyPromise
         if (x && y) {
             return await factoryContract.read.getAddress([x, y])
         }
     })
-    let accountContractPromise = $derived.by(async () => {
+    const accountContractPromise = $derived.by(async () => {
         const accountAddress = await accountAddressPromise
         if (accountAddress) {
             return getContract({
@@ -1230,6 +1250,8 @@
 
     async function sendUserOp() {
         const address = (await accountAddressPromise)!
+        const account = await webauthnAccountPromise
+        const {x,y} = await xyPromise
         const smartAccount = await toSmartAccount({
             client,
             entryPoint: {
@@ -1293,14 +1315,14 @@
                         sender: address
                     }
                 })
-                return (await webauthnAccount!.sign({hash})).signature
+                return (await account!.sign({hash})).signature
             },
             signMessage: async function ({message}: { message: SignableMessage; }): Promise<Hex> {
-                const sig = await webauthnAccount!.signMessage({message})
+                const sig = await account!.signMessage({message})
                 return sig.signature
             },
             signTypedData: async function <const typedData extends TypedData | Record<string, unknown>, primaryType extends keyof typedData | "EIP712Domain" = keyof typedData>(parameters: TypedDataDefinition<typedData, primaryType>): Promise<Hex> {
-                const sig = await webauthnAccount!.signTypedData(parameters)
+                const sig = await account!.signTypedData(parameters)
                 return sig.signature
             }
         })
@@ -1326,9 +1348,6 @@
         if (!cred) {
             throw new Error("No credential returned")
         }
-
-        const result = await factoryContract.read.getCredentialPublicKey([toHex(cred.id)])
-        ;([x, y] = result)
     }
 
 </script>
