@@ -11,6 +11,7 @@
     "aa:deploy:local": "cd vendor/account-abstraction && env COREPACK_ENABLE_STRICT=0 corepack yarn@1 && env COREPACK_ENABLE_STRICT=0 corepack yarn@1 deploy --network localhost",
     "hh:node": "pnpm --filter @appliedblockchain/aa-demo-contracts hh:node",
     "hh:deploy:factory": "pnpm --filter @appliedblockchain/aa-demo-contracts ig:deploy --network localhost",
+    "hh:deploy:token": "pnpm --filter @appliedblockchain/aa-demo-contracts ig:deploy:token --network localhost",
     "deploy": "pnpm aa:deploy:local && pnpm hh:deploy:factory"
   },
   "keywords": [

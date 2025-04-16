@@ -40,24 +40,23 @@ contract P256SimpleAccountFactory is PublicKeyRegistry {
         bytes32 qx,
         bytes32 qy
     ) public returns (P256SimpleAccount ret) {
-        console.log("create account called lol");
-//        require(
-//            msg.sender == address(senderCreator),
-//			OnlySenderCreator()
-//        );
-//        address addr = getAddress(qx, qy);
-//        uint256 codeSize = addr.code.length;
-//        if (codeSize > 0) {
-//            return P256SimpleAccount(payable(addr));
-//        }
-//        ret = P256SimpleAccount(
-//            payable(
-//                new ERC1967Proxy{salt: bytes32(salt)}(
-//                    address(accountImplementation),
-//                    abi.encodeCall(P256SimpleAccount.initialize, (qx, qy))
-//                )
-//            )
-//        );
+        require(
+            msg.sender == address(senderCreator),
+			OnlySenderCreator()
+        );
+        address addr = getAddress(qx, qy);
+        uint256 codeSize = addr.code.length;
+        if (codeSize > 0) {
+            return P256SimpleAccount(payable(addr));
+        }
+        ret = P256SimpleAccount(
+            payable(
+                new ERC1967Proxy{salt: bytes32(salt)}(
+                    address(accountImplementation),
+                    abi.encodeCall(P256SimpleAccount.initialize, (qx, qy))
+                )
+            )
+        );
     }
 
     /**

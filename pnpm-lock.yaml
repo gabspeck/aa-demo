@@ -63,7 +63,7 @@ importers:
         version: 1.12.0
       viem:
         specifier: ^2.25.0
-        version: 2.25.0(typescript@5.8.2)(zod@3.24.2)
+        version: link:../../../viem-0.8-support/src
     devDependencies:
       '@eslint/compat':
         specifier: ^1.2.5

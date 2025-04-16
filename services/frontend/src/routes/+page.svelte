@@ -8,14 +8,6 @@
         <form class="my-5" onsubmit={retrieveCredential}>
             <button type="submit" class="form-input">Retrieve Credential</button>
         </form>
-        <form>
-            <label>Parse Entrypoint Error
-                <textarea bind:value={entryPointReturnData} class="form-textarea"></textarea>
-            </label>
-            {#if parsedEntryPointData}
-                <p>{parsedEntryPointData}</p>
-            {/if}
-        </form>
         {#if cred}
             <p>Credential ID: {cred.id}</p>
             {#await xyPromise}
@@ -59,13 +51,16 @@
         type UserOperation
     } from "viem/account-abstraction";
     import {
-        type Address, concatHex,
+        type Address,
+        concatHex,
         createWalletClient,
-        decodeErrorResult,
         encodeFunctionData,
+        formatEther,
         getContract,
         type Hex,
-        http, keccak256,
+        http,
+        keccak256,
+        parseEther,
         publicActions,
         type SignableMessage,
         toHex,
@@ -75,12 +70,13 @@
     } from "viem";
     import {privateKeyToAccount} from "viem/accounts";
     import {hardhat} from "viem/chains";
+    import {getBalance, getTransactionReceipt, sendTransaction} from "viem/actions";
 
     const rpcEndpoint = "http://localhost:8545"
     const bundlerRpcEndpoint = "http://localhost:3000/rpc"
     const relayerKey = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
     const factoryAddress = "0x5fc8d32690cc91d4c39d9d3abcbd16989f875707"
-    const erc20TokenAddress = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+    const erc20TokenAddress = "0x0165878A594ca255338adfa4d48449f69242Eb8F" as Hex
     const entryPointV08Address = '0x4337084d9e255ff0702461cf8895ce9e3b5ff108'
     const relayerAccount = privateKeyToAccount(relayerKey)
     const client = createWalletClient({
@@ -1186,7 +1182,7 @@
         if (cred && x && y) {
             return toWebAuthnAccount({
                 credential: {
-                    id: toHex(new Uint8Array(cred.rawId)),
+                    id: cred.id,
                     publicKey: concatHex([x, y])
                 }
             })
@@ -1209,18 +1205,6 @@
             })
         }
     })
-    let entryPointReturnData = $state('')
-    const parsedEntryPointData = $derived.by(() => {
-        if (entryPointReturnData) {
-            try {
-                const result = decodeErrorResult({abi: entryPointV08Abi, data: entryPointReturnData as Hex})
-                return `${result.errorName}(${result.args})`
-            } catch (e) {
-                return (e as Error).message
-            }
-        }
-    })
-
 
     type CreateWebAuthnCredentialAttestationReturnType = CreateWebAuthnCredentialReturnType & {
         raw: CreateWebAuthnCredentialReturnType['raw'] & {
@@ -1251,7 +1235,7 @@
     async function sendUserOp() {
         const address = (await accountAddressPromise)!
         const account = await webauthnAccountPromise
-        const {x,y} = await xyPromise
+        const {x, y} = await xyPromise
         const smartAccount = await toSmartAccount({
             client,
             entryPoint: {
@@ -1305,6 +1289,7 @@
             signUserOperation: async function (parameters: UnionPartialBy<UserOperation, "sender"> & {
                 chainId?: number | undefined;
             }): Promise<Hex> {
+
                 const {chainId = client.chain!.id, ...userOperation} = parameters
                 const hash = getUserOperationHash({
                     chainId,
@@ -1315,7 +1300,9 @@
                         sender: address
                     }
                 })
-                return (await account!.sign({hash})).signature
+                // todo: signature is failing... check for malleability issue
+                const result = (await account!.sign({hash}))
+                return result.signature
             },
             signMessage: async function ({message}: { message: SignableMessage; }): Promise<Hex> {
                 const sig = await account!.signMessage({message})
@@ -1326,8 +1313,10 @@
                 return sig.signature
             }
         })
-        const preparedUserOp = await bundlerClient.prepareUserOperation({
+        const userOp = {
             account: smartAccount,
+            callGasLimit: BigInt('0xFFFFFF'),
+            verificationGasLimit: BigInt('0xFFFFFF'),
             calls: [{
                 to: erc20TokenAddress,
                 data: encodeFunctionData({
@@ -1336,8 +1325,26 @@
                     args: [address, 100n]
                 })
             }]
-        })
-        console.log({preparedUserOp})
+        }
+        const tx = await sendTransaction(client, {to: address, value: parseEther('10')})
+        const receipt = await getTransactionReceipt(client, {hash: tx})
+        console.log({receipt})
+        const scaBalance = await getBalance(client, {address})
+        console.log({balance: formatEther(scaBalance)})
+        const estimatedGas = await bundlerClient.estimateUserOperationGas(userOp)
+        const fixedEstimations = {
+            ...estimatedGas,
+            preVerificationGas: estimatedGas.preVerificationGas * 2n,
+            verificationGasLimit: estimatedGas.verificationGasLimit * 2n
+        }
+        const preparedOp: UserOperation = await bundlerClient.prepareUserOperation({
+            ...userOp, ...fixedEstimations,
+            maxFeePerGas: parseEther('0.000001'),
+            maxPriorityFeePerGas: parseEther('0.00001')
+        }) as UserOperation
+        preparedOp.signature = await smartAccount.signUserOperation(preparedOp)
+        const result = await bundlerClient.sendUserOperation(preparedOp)
+        console.log({result})
     }
 
     async function retrieveCredential() {
