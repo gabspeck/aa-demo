@@ -1,6 +1,6 @@
 [submodule "vendor/bundler"]
 	path = vendor/bundler
-	url = https://github.com/eth-infinitism/bundler
+	url = https://github.com/gabspeck/bundler
 	ignore = dirty
 [submodule "vendor/account-abstraction"]
 	path = vendor/account-abstraction

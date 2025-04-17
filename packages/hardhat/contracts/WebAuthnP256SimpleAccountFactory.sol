@@ -7,7 +7,7 @@ import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {ISenderCreator} from "@account-abstraction/contracts/interfaces/ISenderCreator.sol";
-import {P256SimpleAccount} from "./P256SimpleAccount.sol";
+import {WebAuthnP256SimpleAccount} from "./WebAuthnP256SimpleAccount.sol";
 import {PublicKeyRegistry} from "./PublicKeyRegistry.sol";
 
 /**
@@ -16,8 +16,8 @@ import {PublicKeyRegistry} from "./PublicKeyRegistry.sol";
  * The factory's createAccount returns the target account address even if it is already installed.
  * This way, the entryPoint.getSenderAddress() can be called either before or after the account is created.
  */
-contract P256SimpleAccountFactory is PublicKeyRegistry {
-    P256SimpleAccount public immutable accountImplementation;
+contract WebAuthnP256SimpleAccountFactory is PublicKeyRegistry {
+    WebAuthnP256SimpleAccount public immutable accountImplementation;
     ISenderCreator public immutable senderCreator;
 
 	error OnlySenderCreator();
@@ -25,7 +25,7 @@ contract P256SimpleAccountFactory is PublicKeyRegistry {
     uint256 public immutable salt;
 
     constructor(IEntryPoint _entryPoint, uint256 _salt) {
-        accountImplementation = new P256SimpleAccount(_entryPoint);
+        accountImplementation = new WebAuthnP256SimpleAccount(_entryPoint);
         salt = _salt;
         senderCreator = _entryPoint.senderCreator();
     }
@@ -39,7 +39,7 @@ contract P256SimpleAccountFactory is PublicKeyRegistry {
     function createAccount(
         bytes32 qx,
         bytes32 qy
-    ) public returns (P256SimpleAccount ret) {
+    ) public returns (WebAuthnP256SimpleAccount ret) {
         require(
             msg.sender == address(senderCreator),
 			OnlySenderCreator()
@@ -47,13 +47,13 @@ contract P256SimpleAccountFactory is PublicKeyRegistry {
         address addr = getAddress(qx, qy);
         uint256 codeSize = addr.code.length;
         if (codeSize > 0) {
-            return P256SimpleAccount(payable(addr));
+            return WebAuthnP256SimpleAccount(payable(addr));
         }
-        ret = P256SimpleAccount(
+        ret = WebAuthnP256SimpleAccount(
             payable(
                 new ERC1967Proxy{salt: bytes32(salt)}(
                     address(accountImplementation),
-                    abi.encodeCall(P256SimpleAccount.initialize, (qx, qy))
+                    abi.encodeCall(WebAuthnP256SimpleAccount.initialize, (qx, qy))
                 )
             )
         );
@@ -72,7 +72,7 @@ contract P256SimpleAccountFactory is PublicKeyRegistry {
                         abi.encode(
                             address(accountImplementation),
                             abi.encodeCall(
-                                P256SimpleAccount.initialize,
+                                WebAuthnP256SimpleAccount.initialize,
                                 (qx, qy)
                             )
                         )

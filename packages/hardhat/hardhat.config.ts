@@ -4,6 +4,9 @@ import "hardhat-dependency-compiler"
 import "hardhat-tracer"
 
 const config: HardhatUserConfig = {
+  ignition: {
+    requiredConfirmations: 1
+  },
   solidity: {
     version: "0.8.28",
     settings: {

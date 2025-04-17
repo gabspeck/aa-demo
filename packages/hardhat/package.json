@@ -6,8 +6,8 @@
   "scripts": {
     "hh:node": "hardhat node",
     "ig": "hardhat ignition",
-    "ig:wipe": "pnpm ig wipe chain-31337 P256AccountFactory#P256AccountFactory",
-    "ig:deploy": "pnpm ig deploy ignition/modules/P256SimpleAccountFactory.ts",
+    "ig:wipe": "pnpm ig wipe chain-31337 WebAuthnP256SimpleAccountFactory#WebAuthnP256SimpleAccountFactory",
+    "ig:deploy": "pnpm ig deploy ignition/modules/WebAuthnP256SimpleAccountFactory.ts",
     "ig:deploy:token": "pnpm ig deploy ignition/modules/SampleERC20.ts"
   },
   "keywords": [],

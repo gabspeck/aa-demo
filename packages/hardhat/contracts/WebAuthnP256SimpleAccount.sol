@@ -12,15 +12,15 @@ import {BaseAccount, PackedUserOperation} from "@account-abstraction/contracts/c
 import {SIG_VALIDATION_FAILED, SIG_VALIDATION_SUCCESS} from "@account-abstraction/contracts/core/Helpers.sol";
 import {TokenCallbackHandler} from "@account-abstraction/contracts/accounts/callback/TokenCallbackHandler.sol";
 import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import {SignerP256} from "../vendor/openzeppelin-community-contracts/contracts/utils/cryptography/SignerP256.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import {SignerWebAuthnP256} from "./SignerWebAuthnP256.sol";
 
-contract P256SimpleAccount is
+contract WebAuthnP256SimpleAccount is
     BaseAccount,
     TokenCallbackHandler,
     UUPSUpgradeable,
     Initializable,
-    SignerP256,
+    SignerWebAuthnP256,
     IERC1271
 {
     error OnlyOwner();
@@ -28,7 +28,7 @@ contract P256SimpleAccount is
 
     IEntryPoint private immutable _entryPoint;
 
-    event P256SimpleAccountInitialized(
+    event WebAuthnP256SimpleAccountInitialized(
         IEntryPoint indexed entryPoint,
         bytes32 qx,
         bytes32 qy
@@ -70,14 +70,14 @@ contract P256SimpleAccount is
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
     ) internal view override returns (uint256 validationData) {
-        if (SignerP256._rawSignatureValidation(userOpHash, userOp.signature)) {
+        if (SignerWebAuthnP256._rawSignatureValidation(userOpHash, userOp.signature)) {
             validationData = SIG_VALIDATION_SUCCESS;
         }
         validationData = SIG_VALIDATION_FAILED;
     }
 
     function _initialize(bytes32 qx, bytes32 qy) internal virtual {
-        emit P256SimpleAccountInitialized(_entryPoint, qx, qy);
+        emit WebAuthnP256SimpleAccountInitialized(_entryPoint, qx, qy);
     }
 
     // Require the function call went through EntryPoint or owner
