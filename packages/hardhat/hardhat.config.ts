@@ -7,6 +7,11 @@ const config: HardhatUserConfig = {
   ignition: {
     requiredConfirmations: 1
   },
+  networks: {
+      hardhat: {
+          enableRip7212: true
+      }
+  },
   solidity: {
     version: "0.8.28",
     settings: {

@@ -72,11 +72,13 @@ contract WebAuthnP256SimpleAccount is
     ) internal view override returns (uint256 validationData) {
         if (SignerWebAuthnP256._rawSignatureValidation(userOpHash, userOp.signature)) {
             validationData = SIG_VALIDATION_SUCCESS;
+        } else {
+            validationData = SIG_VALIDATION_FAILED;
         }
-        validationData = SIG_VALIDATION_FAILED;
     }
 
     function _initialize(bytes32 qx, bytes32 qy) internal virtual {
+        _setSigner(qx, qy);
         emit WebAuthnP256SimpleAccountInitialized(_entryPoint, qx, qy);
     }
 

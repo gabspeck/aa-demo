@@ -1303,16 +1303,21 @@
 						sender: address
 					}
 				});
+				console.log({hash})
 				const result = (await account!.sign({ hash }));
 				const {r, s} = Signature.fromHex(result.signature)
-				return encodeAbiParameters(parseAbiParameters(['WebAuthnAuth auth', 'struct WebAuthnAuth {bytes authenticatorData; string clientDataJSON; uint256 challengeIndex; uint256 typeIndex; bytes32 r; bytes32 s}']), [{
+				const parms = {
 					authenticatorData: result.webauthn.authenticatorData,
 					clientDataJSON: result.webauthn.clientDataJSON,
-					challengeIndex: result.webauthn.challengeIndex,
-					typeIndex: result.webauthn.typeIndex,
+					challengeIndex: BigInt(result.webauthn.challengeIndex),
+					typeIndex: BigInt(result.webauthn.typeIndex),
 					r: toHex(r, {size: 32}),
 					s: toHex(s, {size: 32})
-				}]);
+				}
+				console.log({parms})
+				const encoded = encodeAbiParameters(parseAbiParameters(['WebAuthnAuth auth', 'struct WebAuthnAuth {bytes authenticatorData; string clientDataJSON; uint256 challengeIndex; uint256 typeIndex; bytes32 r; bytes32 s;}']), [parms]);
+				console.log({encoded})
+				return encoded;
 			},
 			signMessage: async function({ message }: { message: SignableMessage; }): Promise<Hex> {
 				const sig = await account!.signMessage({ message });
@@ -1359,8 +1364,6 @@
 	}
 
 	async function retrieveCredential() {
-		console.log({parsed});
-		return
 		const challengeArray = new Uint8Array(32);
 		cred = await navigator.credentials.get({
 			publicKey: {
