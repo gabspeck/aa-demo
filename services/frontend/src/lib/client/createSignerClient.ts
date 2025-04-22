@@ -1,14 +1,15 @@
 import {
-	type Account,
-	type Chain, type Client,
+	type Chain,
+	type Client,
 	createWalletClient,
+	type LocalAccount,
 	publicActions,
-	type Transport,
+	type Transport
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { config } from '$lib/config';
 
-export function createSignerClient(): Client<Transport, Chain, Account> {
+export function createSignerClient(): Client<Transport, Chain, LocalAccount> {
 	return createWalletClient({
 		account: privateKeyToAccount(config.relayerKey),
 		chain: config.evmRpc.chain,
