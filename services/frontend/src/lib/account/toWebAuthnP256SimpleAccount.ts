@@ -11,21 +11,20 @@ import {
 import {
 	type Address,
 	type Assign,
+	BaseError,
+	decodeFunctionData,
 	encodeAbiParameters,
 	encodeFunctionData,
+	type Hash,
+	hashTypedData,
 	type Hex,
-	keccak256,
 	parseAbiParameters,
 	type Prettify,
 	type SignableMessage,
 	toHex,
 	type TypedData,
 	type TypedDataDefinition,
-	type UnionPartialBy,
-	decodeFunctionData,
-	BaseError,
-	type Hash,
-	hashTypedData
+	type UnionPartialBy
 } from 'viem';
 import { readContract } from 'viem/actions';
 import {
@@ -68,10 +67,10 @@ export const WebAuthnP256SimpleAccountFactory = {
 } as const;
 
 const wrapHashInEIP712 = ({
-														address,
-														chainId,
-														hash
-													}: {
+	address,
+	chainId,
+	hash
+}: {
 	address: Address;
 	chainId: number;
 	hash: Hash;
@@ -98,10 +97,10 @@ const wrapHashInEIP712 = ({
 	});
 
 export const toWebAuthnP256SimpleAccount = async ({
-																										client,
-																										owner,
-																										...parameters
-																									}: ToWebAuthnP256SimpleAccountInput): Promise<ToWebAuthnP256SimpleAccountReturnType> => {
+	client,
+	owner,
+	...parameters
+}: ToWebAuthnP256SimpleAccountInput): Promise<ToWebAuthnP256SimpleAccountReturnType> => {
 	let address = parameters.address;
 
 	const { x, y } = extractXYCoords(owner.publicKey);
@@ -113,7 +112,7 @@ export const toWebAuthnP256SimpleAccount = async ({
 			address: entryPoint08Address,
 			abi: entryPoint08Abi
 		},
-		getAddress: async function(): Promise<Address> {
+		getAddress: async function (): Promise<Address> {
 			address ??= await readContract(client, {
 				...WebAuthnP256SimpleAccountFactory,
 				functionName: 'getAddress',
@@ -121,7 +120,7 @@ export const toWebAuthnP256SimpleAccount = async ({
 			});
 			return address;
 		},
-		decodeCalls: async function(data: Hex) {
+		decodeCalls: async function (data: Hex) {
 			const result = decodeFunctionData({
 				abi: webAuthnP256SimpleAccountAbi,
 				data
@@ -137,7 +136,7 @@ export const toWebAuthnP256SimpleAccount = async ({
 				}));
 			throw new BaseError(`unable to decode calls for "${result.functionName}"`);
 		},
-		encodeCalls: async function(
+		encodeCalls: async function (
 			calls: readonly {
 				to: Hex;
 				data?: Hex | undefined;
@@ -163,7 +162,7 @@ export const toWebAuthnP256SimpleAccount = async ({
 				]
 			});
 		},
-		getFactoryArgs: async function(): Promise<{
+		getFactoryArgs: async function (): Promise<{
 			factory?: Address | undefined;
 			factoryData?: Hex | undefined;
 		}> {
@@ -172,13 +171,12 @@ export const toWebAuthnP256SimpleAccount = async ({
 				functionName: 'createAccount',
 				args: [x, y]
 			});
-			console.log(keccak256(new TextEncoder().encode('createAccount(bytes32,bytes32)')));
 			return { factory: WebAuthnP256SimpleAccountFactory.address, factoryData };
 		},
-		getStubSignature: async function(): Promise<Hex> {
+		getStubSignature: async function (): Promise<Hex> {
 			return '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000012000000000000000000000000000000000000000000000000000000000000000170000000000000000000000000000000000000000000000000000000000000001949fc7c88032b9fcb5f6efc7a7b8c63668eae9871b765e23123bb473ff57aa831a7c0d9276168ebcc29f2875a0239cffdf2a9cd1c2007c5c77c071db9264df1d000000000000000000000000000000000000000000000000000000000000002549960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008a7b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a2273496a396e6164474850596759334b7156384f7a4a666c726275504b474f716d59576f4d57516869467773222c226f726967696e223a2268747470733a2f2f7369676e2e636f696e626173652e636f6d222c2263726f73734f726967696e223a66616c73657d00000000000000000000000000000000000000000000';
 		},
-		signUserOperation: async function(
+		signUserOperation: async function (
 			parameters: UnionPartialBy<UserOperation, 'sender'> & {
 				chainId?: number | undefined;
 			}
@@ -211,12 +209,16 @@ export const toWebAuthnP256SimpleAccount = async ({
 				[parms]
 			);
 		},
-		sign: async function({ hash }) {
-			return this.signMessage(
-				{ message: wrapHashInEIP712({ chainId: this.client.chain!.id, hash, address: await this.getAddress() }) }
-			);
+		sign: async function ({ hash }) {
+			return this.signMessage({
+				message: wrapHashInEIP712({
+					chainId: this.client.chain!.id,
+					hash,
+					address: await this.getAddress()
+				})
+			});
 		},
-		signMessage: async function({ message }: { message: SignableMessage }): Promise<Hex> {
+		signMessage: async function ({ message }: { message: SignableMessage }): Promise<Hex> {
 			const sig = await owner.signMessage({ message });
 			return sig.signature;
 		},

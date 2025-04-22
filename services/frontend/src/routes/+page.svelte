@@ -1,185 +1,56 @@
-<main class="w-full h-full">
-	<div class="m-5">
-		<form onsubmit={saveCredential}>
-			<h2>Create credential and save to registry</h2>
-			<input class="form-input" name="username" placeholder="Enter a username" bind:value={username} required>
-			<button type="submit" class="form-input">Create credential</button>
+<main class="bg-blue-100 w-screen h-screen flex justify-center items-center">
+	<div class="bg-white h-3/4 w-full max-w-xl border-15 shadow-xl flex flex-col items-center justify-center">
+		<form class="flex flex-col" onsubmit={submit}>
+			<input class="form-input" placeholder="Username">
+			<div class="flex flex-col mt-5">
+				<button name="action" value="signup" class="form-input">Log in</button>
+				<button name="action" value="login" class="form-input">Sign up</button>
+			</div>
 		</form>
-		<form class="my-5" onsubmit={retrieveCredential}>
-			<button type="submit" class="form-input">Retrieve Credential</button>
-		</form>
-		{#if credentialIdHex}
-			<p>Credential ID: {credentialIdHex}</p>
-			{#await xyPromise}
-				<p>Retrieving public key coords...</p>
-			{:then { x, y }}
-				<p>x: {x}</p>
-				<p>y: {y}</p>
-			{:catch e}
-				<p>Error retrieving public key: {e}</p>
-			{/await}
-			{#await accountPromise}
-				<p>Retrieving account...</p>
-			{:then account}
-				{#await account?.getAddress()}
-					<p>Retrieving address...</p>
-				{:then address}
-					<p>Computed address: {address}</p>
-				{/await}
-			{:catch e}
-				<p>Error fetching address: {e}</p>
-			{/await}
-			<form onsubmit={sendUserOp}>
-				<button class="form-input" type="submit">Send Mint Op</button>
-			</form>
-		{:else}
-			<p>Create or retrieve a credential to begin</p>
-		{/if}
 	</div>
 </main>
 
 
 <script lang="ts">
-	import { sampleErc20Abi, webAuthnP256SimpleAccountFactoryAbi } from '@appliedblockchain/aa-demo-contracts';
-	import {
-		createBundlerClient,
-		createWebAuthnCredential,
-		toWebAuthnAccount,
-		type UserOperation
-	} from 'viem/account-abstraction';
-	import {
-		concatHex,
-		createWalletClient,
-		encodeFunctionData,
-		formatEther,
-		getContract,
-		type Hex,
-		http,
-		parseEther,
-		publicActions,
-		toHex
-	} from 'viem';
-	import { privateKeyToAccount } from 'viem/accounts';
-	import { hardhat } from 'viem/chains';
-	import { getBalance, getTransactionReceipt, sendTransaction } from 'viem/actions';
-	import { toWebAuthnP256SimpleAccount } from '$lib/account/toWebAuthnP256SimpleAccount';
-	import { saveCredentialToFactory } from '$lib/account';
-	import { derived } from 'svelte/store';
 
-	const rpcEndpoint = 'http://localhost:8545';
-	const bundlerRpcEndpoint = 'http://localhost:3000/rpc';
-	const relayerKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as Hex;
-	const factoryAddress = '0x5fc8d32690cc91d4c39d9d3abcbd16989f875707' as Hex;
-	const erc20TokenAddress = '0x0165878A594ca255338adfa4d48449f69242Eb8F' as Hex;
-	const relayerAccount = privateKeyToAccount(relayerKey);
-	const client = createWalletClient({
-		account: relayerAccount,
-		chain: hardhat,
-		transport: http(rpcEndpoint)
-	}).extend(publicActions);
-	const bundlerClient = createBundlerClient({ transport: http(bundlerRpcEndpoint), chain: hardhat });
-	const factoryContract = getContract({
-		client,
-		abi: webAuthnP256SimpleAccountFactoryAbi,
-		address: factoryAddress
-	});
-	const erc20TokenContract = getContract({
-		client,
-		abi: sampleErc20Abi,
-		address: erc20TokenAddress
-	});
+	import { createCredential } from 'ox/WebAuthnP256';
+	import { saveCredentialToFactory } from '$lib/accountFactory';
+	import { createSignerClient } from '$lib/client';
+	import { sessionState } from '$lib/state/session.svelte';
+	import { toHex } from 'viem';
+	import { toWebAuthnP256SimpleAccount } from '$lib/account';
+	import { toWebAuthnAccount } from 'viem/account-abstraction';
 
-	let username = $state('');
-	let credentialIdBase64: string | null = $state(null);
-	let credentialIdHex: Hex | null = $state(null);
-	const xyPromise = $derived.by(async () => {
-		if (credentialIdHex) {
-			const [x, y] = await factoryContract.read.getCredentialPublicKey([credentialIdHex]);
-			return { x, y };
-		}
-		return { x: null, y: null };
-	});
-	const accountPromise = $derived.by(async () => {
-		const { x, y } = await xyPromise;
-		if (credentialIdHex && x && y) {
-			return toWebAuthnP256SimpleAccount({
-				client,
-				owner: toWebAuthnAccount({ credential: { id: credentialIdBase64, publicKey: concatHex([x, y]) } })
-			});
-		}
-		return null;
-	});
+	const client = createSignerClient()
 
-	async function saveCredential(e: SubmitEvent & { currentTarget: HTMLFormElement }) {
-		e.preventDefault();
-		// step 1: create credential
+	async function signup(username: string) {
 		const challenge = new Uint8Array(32);
-		const credential = await createWebAuthnCredential({
-			challenge: crypto.getRandomValues(challenge),
+		crypto.getRandomValues(challenge);
+		const credential = await createCredential({
 			user: {
 				name: username
-			}
+			},
+			challenge
 		});
-		const _credentialId = toHex(new Uint8Array(credential.raw.rawId));
-		// step 2: save to factory so public key is retrievable from ID later
-		await saveCredentialToFactory({
+		await saveCredentialToFactory({client, credential: credential})
+		await toWebAuthnP256SimpleAccount({
 			client,
-			credential: { id: _credentialId, publicKey: credential.publicKey }
-		});
-		credentialIdHex = _credentialId;
-		credentialIdBase64 = credential.id;
+			owner: toWebAuthnAccount({credential})
+		})
+		sessionState.credentialId = toHex(new Uint8Array(credential.raw.rawId))
 	}
 
+	async function login(username: string) {
+	}
 
-	async function sendUserOp(e: SubmitEvent & { currentTarget: HTMLFormElement }) {
+	const handlers: Record<string, (username: string) => Promise<void>> = {
+		signup,
+		login
+	};
+
+	async function submit(e: SubmitEvent & { currentTarget: HTMLFormElement }) {
 		e.preventDefault();
-		const smartAccount = (await accountPromise)!;
-		const address = smartAccount.address;
-		const userOp = {
-			account: smartAccount,
-			callGasLimit: BigInt('0xFFFFFF'),
-			verificationGasLimit: BigInt('0xFFFFFF'),
-			calls: [{
-				to: erc20TokenAddress,
-				data: encodeFunctionData({
-					abi: erc20TokenContract.abi,
-					functionName: 'mint',
-					args: [await smartAccount.getAddress(), 100n]
-				})
-			}]
-		};
-		const tx = await sendTransaction(client, { to: address, value: parseEther('10') });
-		const receipt = await getTransactionReceipt(client, { hash: tx });
-		console.log({ receipt });
-		const scaBalance = await getBalance(client, { address });
-		console.log({ balance: formatEther(scaBalance) });
-		const estimatedGas = await bundlerClient.estimateUserOperationGas(userOp);
-		const fixedEstimations = {
-			...estimatedGas,
-			preVerificationGas: estimatedGas.preVerificationGas * 2n,
-			verificationGasLimit: estimatedGas.verificationGasLimit * 2n
-		};
-		const preparedOp: UserOperation = await bundlerClient.prepareUserOperation({
-			...userOp, ...fixedEstimations,
-			maxFeePerGas: parseEther('0.000001'),
-			maxPriorityFeePerGas: parseEther('0.00001')
-		}) as UserOperation;
-		preparedOp.signature = await smartAccount.signUserOperation(preparedOp);
-		const result = await bundlerClient.sendUserOperation(preparedOp);
+		const data = new FormData(e.currentTarget);
+		await handlers[(e.submitter as HTMLButtonElement).value](data.get('username') as string);
 	}
-
-	async function retrieveCredential() {
-		const challengeArray = new Uint8Array(32);
-		credentialIdHex = toHex(new Uint8Array((await navigator.credentials.get({
-			publicKey: {
-				challenge: challengeArray
-			}
-		}) as PublicKeyCredential & {
-			response: AuthenticatorAssertionResponse | AuthenticatorAttestationResponse
-		}).rawId));
-		if (!credentialIdHex) {
-			throw new Error('No credential returned');
-		}
-	}
-
 </script>
