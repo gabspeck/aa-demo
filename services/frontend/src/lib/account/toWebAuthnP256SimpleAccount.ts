@@ -5,8 +5,8 @@ import {
 	type SmartAccount,
 	type SmartAccountImplementation,
 	toSmartAccount,
-	type UserOperation,
-	type WebAuthnAccount
+	type UserOperation, type WebAuthnAccount,
+	type WebAuthnAccunt
 } from 'viem/account-abstraction';
 import {
 	type Address,
@@ -34,7 +34,7 @@ import {
 import * as Signature from 'ox/Signature';
 import { extractXYCoords } from '$lib/encoding';
 
-type WebAuthnP256SimpleAccountImplementation = Assign<
+export type WebAuthnP256SimpleAccountImplementation = Assign<
 	SmartAccountImplementation<
 		typeof entryPoint08Abi,
 		'0.8',
