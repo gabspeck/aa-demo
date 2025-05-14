@@ -31,7 +31,7 @@
 	</label>
 
 
-	{#if error}
+	{#if errorMessage}
 		<div class="alert preset-tonal-error mt-4 p-2">
 			<span>{error}</span>
 		</div>
@@ -48,11 +48,25 @@
 	import { getPublicKeyByCredentialId } from '$lib/accountFactory/getPublicKeyByCredentialId';
 	import { toHex, concatHex } from 'viem';
 
+	const isUserAbortError = (e: Error) => ['WebAuthnP256.CredentialCreationFailedError', 'NotAllowedError'].includes(e.name)
+
 	const client = createSignerClient();
-	let error: string | null = $state(null);
+	let error: Error | null = $state(null);
+	const errorMessage: string | null = $derived.by(() => {
+		if (!error || isUserAbortError(error)) {
+			return null;
+		}
+		return error.message;
+	});
 	let username: string = $state('');
 	let loading: boolean = $state(false);
 	let lastAction: 'login' | 'signup' | null = $state(null);
+
+	$effect(() => {
+		if (error && !isUserAbortError(error)) {
+			console.error(error);
+		}
+	});
 
 	async function signup() {
 		try {
@@ -69,8 +83,7 @@
 			});
 			setSession({ account });
 		} catch (e: unknown) {
-			error = (e as Error).message;
-			console.error(e);
+			error = e as Error;
 		} finally {
 			loading = false;
 		}
@@ -101,8 +114,7 @@
 				})
 			});
 		} catch (e: unknown) {
-			console.error(e);
-			error = (e as Error).message;
+			error = e as Error;
 		} finally {
 			loading = false;
 		}

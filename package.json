@@ -10,8 +10,8 @@
     "bundler:start": "cd vendor/bundler && corepack yarn@1 run bundler --network http://127.0.0.1:8545 --unsafe --mnemonic mnemonic.txt",
     "aa:deploy:local": "cd vendor/account-abstraction && env COREPACK_ENABLE_STRICT=0 corepack yarn@1 && env COREPACK_ENABLE_STRICT=0 corepack yarn@1 deploy --network localhost",
     "hh:node": "pnpm --filter @appliedblockchain/aa-demo-contracts hh:node",
-    "hh:deploy:factory": "pnpm --filter @appliedblockchain/aa-demo-contracts ig:deploy --network localhost",
-    "hh:deploy:token": "pnpm --filter @appliedblockchain/aa-demo-contracts ig:deploy:token --network localhost",
+    "hh:deploy:factory": "pnpm --filter @appliedblockchain/aa-demo-contracts ig:deploy --strategy create2 --network localhost",
+    "hh:deploy:token": "pnpm --filter @appliedblockchain/aa-demo-contracts ig:deploy:token --strategy create2 --network localhost",
     "deploy": "pnpm aa:deploy:local && pnpm hh:deploy:factory"
   },
   "keywords": [
