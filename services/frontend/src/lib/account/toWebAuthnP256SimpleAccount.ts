@@ -6,7 +6,6 @@ import {
 	type SmartAccountImplementation,
 	toSmartAccount,
 	type UserOperation, type WebAuthnAccount,
-	type WebAuthnAccunt
 } from 'viem/account-abstraction';
 import {
 	type Address,
