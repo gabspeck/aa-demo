@@ -59,7 +59,7 @@ type ToWebAuthnP256SimpleAccountInput = {
 	address?: Address;
 };
 
-export const WebAuthnP256SimpleAccountFactoryAddress = '0x5fc8d32690cc91d4c39d9d3abcbd16989f875707';
+export const WebAuthnP256SimpleAccountFactoryAddress = '0xe693e3d60B09e6D3f93A2B9A05548D7CcB253FB2';
 
 export const WebAuthnP256SimpleAccountFactory = {
 	abi: webAuthnP256SimpleAccountFactoryAbi,
